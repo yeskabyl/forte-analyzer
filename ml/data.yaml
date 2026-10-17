@@ -1,0 +1,16 @@
+# Пример конфигурации датасета для train_and_predict.py.
+# Экспорт Roboflow в формате "YOLOv8" создаёт такой же файл сам — используйте его.
+#
+# Ожидаемая структура (пути относительно `path`):
+#   dataset/yolo/train/images/*.jpg   dataset/yolo/train/labels/*.txt
+#   dataset/yolo/valid/images/*.jpg   dataset/yolo/valid/labels/*.txt
+# Строка в .txt: <class_id> <x_center> <y_center> <width> <height>, всё в долях 0..1.
+
+path: dataset/yolo
+train: train/images
+val: valid/images
+
+# Имена классов должны совпадать с CASH_CLASS / STAFF_CLASS в train_and_predict.py.
+names:
+  0: cash
+  1: staff

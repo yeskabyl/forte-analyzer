@@ -62,6 +62,23 @@ npm run build    # проверка типов + сборка в dist/
   показываются галереей с увеличением по клику; этот бэкенд кадры пока не отдаёт.
 - Клик по таймкоду перематывает локальное превью видео (если браузер умеет декодировать кодек файла).
 
+## ML: подготовка данных и YOLOv8 (`ml/`)
+
+Работает полностью локально (OpenCV + ultralytics), отдельные зависимости: `pip install -r ml/requirements.txt`.
+
+```bash
+cd ml
+# 1. Кадры t-1 / t / t+1 вокруг каждого нарушения из annotations_template.xlsx → dataset/frames/
+python prepare_data.py --xlsx annotations_template.xlsx --videos-dir videos
+# 2. Разметить кадры в Roboflow (классы cash, staff), экспорт "YOLOv8" → dataset/yolo/
+python train_and_predict.py train --data dataset/yolo/data.yaml --epochs 50
+# 3. Поиск unattended_cash (cash есть, staff нет) по 1 кадру в секунду
+python train_and_predict.py predict --video videos/X-1.mov --model best.pt
+```
+
+Видео, таблица, кадры и веса в git не попадают (`.gitignore`): данные хакатона публиковать нельзя.
+Бэкенд пока использует эвристику из `app/analyzer.py`; подключение `best.pt` к нему — отдельный шаг.
+
 ## Как устроен анализ
 
 `app/analyzer.py` — **базовая эвристика, не обученная модель**:

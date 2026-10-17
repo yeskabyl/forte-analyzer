@@ -4,3 +4,12 @@ __pycache__/
 .pytest_cache/
 data/
 .env
+
+# Hackathon data must not be published (see annotations_template README); ML artifacts
+*.mov
+*.MOV
+*.xlsx
+ml/dataset/
+ml/videos/
+ml/runs/
+ml/*.pt

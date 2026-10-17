@@ -1,0 +1,10 @@
+# Зависимости для prepare_data.py и train_and_predict.py (проверено на Python 3.12, Windows, CPU).
+# Установка:  pip install -r requirements.txt
+#
+# ultralytics сам ставит torch/torchvision. С pip по умолчанию это CPU-сборка.
+# Для обучения на NVIDIA GPU сначала поставьте torch с CUDA по инструкции
+# https://pytorch.org/get-started/locally/ , потом этот файл.
+ultralytics==8.4.179
+opencv-python==5.0.0.93
+pandas==3.0.6
+openpyxl==3.1.5
