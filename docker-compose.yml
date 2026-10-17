@@ -1,0 +1,45 @@
+x-app-env: &app-env
+  API_KEY: ${API_KEY:-forte-secret-key-2026}
+  REDIS_URL: redis://redis:6379/0
+  DATA_DIR: /data
+  MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-500}
+
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: .
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment: *app-env
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      - app-data:/data
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    build: .
+    command: ["celery", "-A", "app.celery_app:celery_app", "worker", "--loglevel=INFO", "--concurrency=2"]
+    environment: *app-env
+    volumes:
+      - app-data:/data
+    depends_on:
+      redis:
+        condition: service_healthy
+      api:
+        condition: service_started
+    restart: unless-stopped
+
+# The API and the worker share this volume: uploaded videos and the SQLite file.
+volumes:
+  app-data:
