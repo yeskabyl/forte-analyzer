@@ -40,6 +40,15 @@ services:
         condition: service_started
     restart: unless-stopped
 
+  web:
+    build: ./frontend
+    ports:
+      - "${WEB_PORT:-3000}:80"
+    depends_on:
+      api:
+        condition: service_started
+    restart: unless-stopped
+
 # The API and the worker share this volume: uploaded videos and the SQLite file.
 volumes:
   app-data:

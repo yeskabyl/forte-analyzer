@@ -6,5 +6,6 @@ __pycache__
 .pytest_cache
 data
 tests
+frontend
 *.mp4
 *.mov

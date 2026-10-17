@@ -10,7 +10,7 @@ FastAPI принимает файл, Celery-воркер (брокер Redis) а
 docker-compose up --build        # или: docker compose up --build
 ```
 
-API: `http://localhost:8000`, Swagger UI: `http://localhost:8000/docs` (кнопка **Authorize** → `X-API-Key`).
+Веб-интерфейс: `http://localhost:3000`. API: `http://localhost:8000`, Swagger UI: `http://localhost:8000/docs` (кнопка **Authorize** → `X-API-Key`).
 Если порт 8000 занят: `API_PORT=8010 docker-compose up --build`. Остальные переменные — в `.env.example`.
 
 ## API
@@ -40,10 +40,21 @@ CORS включён (`CORS_ORIGINS`, по умолчанию `*`).
 
 ## Веб-интерфейс
 
-`frontend/index.html` — один файл (Bootstrap 5 с CDN + vanilla JS), сборка не нужна. Откройте его в браузере
-двойным кликом или раздайте: `python -m http.server 5500 -d frontend`.
+`frontend/` — React 19 + TypeScript + Vite, Bootstrap 5. В Docker собирается и раздаётся nginx:
+**http://localhost:3000** (порт — `WEB_PORT`). nginx проксирует `/api` в контейнер `api`, поэтому браузер
+обращается к API со своего же адреса.
 
-- По умолчанию обращается к `http://localhost:8000`; другой адрес: `index.html?api=http://localhost:8010`.
+Локальная разработка (бэкенд должен работать на `:8000`, либо задайте `VITE_PROXY_TARGET`):
+
+```bash
+cd frontend
+npm install
+npm run dev      # http://localhost:5173, /api проксируется на бэкенд
+npm test         # vitest
+npm run build    # проверка типов + сборка в dist/
+```
+
+- Другой адрес API без прокси: `?api=http://localhost:8010` в URL или `VITE_API_BASE_URL` при сборке.
 - Ключ в поле по умолчанию — `forte2026` (как в ТЗ фронтенда). Бэкенд по умолчанию ждёт `forte-secret-key-2026`:
   введите его в поле или запустите бэкенд с `API_KEY=forte2026`.
 - Понимает оба формата ответа: `{verdict, violations[{type, timecode_sec, description, evidence_frames}]}`
@@ -80,8 +91,11 @@ forte-video-analyzer/
 │   ├── models.py       # таблица jobs
 │   ├── database.py     # SQLAlchemy engine (SQLite, WAL)
 │   └── config.py       # переменные окружения
-├── frontend/
-│   └── index.html      # SPA: загрузка, поллинг, результаты
+├── frontend/           # React SPA (Vite + TS), Dockerfile + nginx.conf
+│   └── src/
+│       ├── api.ts              # fetch-клиент, поллинг, нормализация ответа
+│       ├── useVideoAnalysis.ts # состояние: idle / processing / result
+│       └── components/         # форма, статусы, карточки, галерея кадров
 ├── tests/              # pytest, Celery в eager-режиме, синтетические видео
 ├── Dockerfile
 ├── docker-compose.yml  # redis + api + worker, общий том /data
