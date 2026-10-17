@@ -20,6 +20,7 @@ class Settings:
     database_url: str
     redis_url: str
     max_upload_mb: int
+    cors_origins: list[str]
     celery_task_always_eager: bool
     # Analyzer tuning
     sample_fps: float
@@ -42,6 +43,7 @@ def load_settings() -> Settings:
         database_url=database_url,
         redis_url=os.getenv("REDIS_URL", "redis://localhost:6379/0"),
         max_upload_mb=int(os.getenv("MAX_UPLOAD_MB", "500")),
+        cors_origins=[o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",") if o.strip()],
         celery_task_always_eager=_env_bool("CELERY_TASK_ALWAYS_EAGER", False),
         sample_fps=float(os.getenv("ANALYZER_SAMPLE_FPS", "2")),
         pixel_diff_threshold=int(os.getenv("ANALYZER_PIXEL_DIFF_THRESHOLD", "25")),

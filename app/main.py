@@ -5,7 +5,8 @@ import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, FastAPI, File, HTTPException, UploadFile, status
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.database import SessionLocal, init_db
@@ -34,6 +35,17 @@ app = FastAPI(
     dependencies=[Depends(require_api_key)],
 )
 
+# CORS runs before routing, so browser preflight (OPTIONS) requests are answered
+# without an API key, and error responses such as 401 stay readable by the frontend.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_methods=["GET", "POST"],
+    allow_headers=["X-API-Key"],
+)
+
+router = APIRouter()
+
 
 def _save_upload(upload: UploadFile, destination: Path) -> int:
     """Copy the upload to disk in chunks, enforcing the size limit. Returns bytes written."""
@@ -57,7 +69,7 @@ def _save_upload(upload: UploadFile, destination: Path) -> int:
 
 # Sync handlers run in FastAPI's threadpool, so disk, DB and broker I/O
 # do not block the event loop.
-@app.post("/v1/analyze", status_code=status.HTTP_202_ACCEPTED, response_model=JobCreated)
+@router.post("/analyze", status_code=status.HTTP_202_ACCEPTED, response_model=JobCreated)
 def analyze(file: UploadFile = File(...)) -> JobCreated:
     extension = Path(file.filename or "").suffix.lower()
     if extension not in ALLOWED_EXTENSIONS:
@@ -91,10 +103,15 @@ def analyze(file: UploadFile = File(...)) -> JobCreated:
     return JobCreated(job_id=job_id)
 
 
-@app.get("/v1/jobs/{job_id}", response_model=JobStatusResponse)
+@router.get("/jobs/{job_id}", response_model=JobStatusResponse)
 def get_job(job_id: str) -> JobStatusResponse:
     with SessionLocal() as db:
         job = db.get(Job, job_id)
     if job is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
     return JobStatusResponse(job_id=job.id, status=job.status, result=job.result, error=job.error)
+
+
+# /v1 is the original contract; /api/v1 is the path the web frontend calls.
+app.include_router(router, prefix="/v1")
+app.include_router(router, prefix="/api/v1")

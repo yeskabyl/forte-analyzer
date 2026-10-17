@@ -35,6 +35,22 @@ curl -H "X-API-Key: forte-secret-key-2026" http://localhost:8000/v1/jobs/<job_id
 | 415 | Расширение не `.mp4` / `.mov` |
 | 503 | Redis недоступен, задача помечена `failed` |
 
+Те же эндпоинты доступны с префиксом `/api/v1` — его использует веб-интерфейс.
+CORS включён (`CORS_ORIGINS`, по умолчанию `*`).
+
+## Веб-интерфейс
+
+`frontend/index.html` — один файл (Bootstrap 5 с CDN + vanilla JS), сборка не нужна. Откройте его в браузере
+двойным кликом или раздайте: `python -m http.server 5500 -d frontend`.
+
+- По умолчанию обращается к `http://localhost:8000`; другой адрес: `index.html?api=http://localhost:8010`.
+- Ключ в поле по умолчанию — `forte2026` (как в ТЗ фронтенда). Бэкенд по умолчанию ждёт `forte-secret-key-2026`:
+  введите его в поле или запустите бэкенд с `API_KEY=forte2026`.
+- Понимает оба формата ответа: `{verdict, violations[{type, timecode_sec, description, evidence_frames}]}`
+  и `{result: {violation, events[]}}` этого бэкенда. Кадры из `evidence_frames` (base64 без `data:`-префикса)
+  показываются галереей с увеличением по клику; этот бэкенд кадры пока не отдаёт.
+- Клик по таймкоду перематывает локальное превью видео (если браузер умеет декодировать кодек файла).
+
 ## Как устроен анализ
 
 `app/analyzer.py` — **базовая эвристика, не обученная модель**:
@@ -64,6 +80,8 @@ forte-video-analyzer/
 │   ├── models.py       # таблица jobs
 │   ├── database.py     # SQLAlchemy engine (SQLite, WAL)
 │   └── config.py       # переменные окружения
+├── frontend/
+│   └── index.html      # SPA: загрузка, поллинг, результаты
 ├── tests/              # pytest, Celery в eager-режиме, синтетические видео
 ├── Dockerfile
 ├── docker-compose.yml  # redis + api + worker, общий том /data

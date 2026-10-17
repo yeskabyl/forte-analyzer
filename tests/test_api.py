@@ -81,6 +81,35 @@ def test_corrupt_file_marks_job_failed(client, auth, tmp_path):
     assert list(settings.upload_dir.iterdir()) == []
 
 
+def test_api_prefix_alias(client, auth, tmp_path):
+    video = write_video(tmp_path / "alias.mov", moving_sec=0, still_sec=3)
+    with video.open("rb") as fh:
+        response = client.post("/api/v1/analyze", headers=auth, files={"file": ("alias.mov", fh, "video/quicktime")})
+    assert response.status_code == 202
+    body = client.get(f"/api/v1/jobs/{response.json()['job_id']}", headers=auth).json()
+    assert body["status"] == "done"
+    assert body["result"]["violation"] is False
+
+
+def test_cors_preflight_needs_no_api_key(client):
+    response = client.options(
+        "/api/v1/analyze",
+        headers={
+            "Origin": "http://localhost:5500",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "x-api-key",
+        },
+    )
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "*"
+
+
+def test_401_is_readable_cross_origin(client):
+    response = client.get(f"/api/v1/jobs/{uuid.uuid4()}", headers={"Origin": "http://localhost:5500"})
+    assert response.status_code == 401
+    assert response.headers["access-control-allow-origin"] == "*"
+
+
 def test_timestamp_format():
     assert format_timestamp(22.0) == "00:22"
     assert format_timestamp(125.4) == "02:05"
