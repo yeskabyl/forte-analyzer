@@ -89,7 +89,9 @@ async function errorFromResponse(res: Response): Promise<Error> {
 
 function networkError(): Error {
   return new Error(
-    `Не удалось подключиться к серверу ${apiBaseLabel()}. Проверьте, что бэкенд запущен и для этой страницы разрешён CORS.`
+    `Не удалось подключиться к серверу ${apiBaseLabel()}. Анализ работает только локально: запустите бэкенд ` +
+      "(docker-compose up) и разрешите браузеру доступ к локальной сети, если он спросит. " +
+      "Другой порт можно указать в адресе страницы: ?api=http://localhost:8010"
   );
 }
 
