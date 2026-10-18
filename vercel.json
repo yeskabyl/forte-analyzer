@@ -2,6 +2,6 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "vite",
   "installCommand": "cd frontend && npm ci",
-  "buildCommand": "cd frontend && VITE_API_BASE_URL=http://localhost:8000 npm run build",
+  "buildCommand": "cd frontend && VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:8000} npm run build",
   "outputDirectory": "frontend/dist"
 }

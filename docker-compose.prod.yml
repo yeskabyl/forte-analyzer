@@ -1,0 +1,36 @@
+# Production overrides for a VPS. Use together with the base file:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+# Settings come from .env next to this file (deploy/setup-server.sh creates it).
+
+services:
+  api:
+    # Not reachable directly from the internet: only through Caddy (HTTPS).
+    ports: !reset []
+    environment:
+      API_KEY: ${API_KEY:?set API_KEY in .env}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://forte-analyzer.vercel.app}
+
+  # The UI is hosted on Vercel; the bundled nginx frontend is not needed on the server.
+  web:
+    profiles: ["local"]
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - api
+
+volumes:
+  # Keeps issued TLS certificates across restarts (avoids Let's Encrypt rate limits).
+  caddy-data:
+  caddy-config:

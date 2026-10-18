@@ -13,6 +13,8 @@ docker-compose up --build        # или: docker compose up --build
 Веб-интерфейс: `http://localhost:3000`. API: `http://localhost:8000`, Swagger UI: `http://localhost:8000/docs` (кнопка **Authorize** → `X-API-Key`).
 Если порт 8000 занят: `API_PORT=8010 docker-compose up --build`. Остальные переменные — в `.env.example`.
 
+Деплой на сервер (бэкенд 24/7, интерфейс на Vercel): [deploy/README.md](deploy/README.md).
+
 ## API
 
 Все эндпоинты требуют заголовок `X-API-Key` (по умолчанию `forte-secret-key-2026`), иначе `401`.
