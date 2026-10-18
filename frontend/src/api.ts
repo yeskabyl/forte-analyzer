@@ -126,6 +126,13 @@ export async function uploadVideo(file: File, apiKey: string, signal: AbortSigna
     if (isAbort(err)) throw err;
     throw networkError();
   }
+  // A static host (e.g. the Vercel deployment) has no /api route at all.
+  if (res.status === 404 || res.status === 405) {
+    throw new Error(
+      `Бэкенд не найден по адресу ${apiBaseLabel()}. Здесь развёрнут только интерфейс — ` +
+        "запустите сервис локально (docker-compose up) и откройте http://localhost:3000."
+    );
+  }
   if (!res.ok) throw await errorFromResponse(res);
   const data = await res.json();
   if (!data.job_id) throw new Error("Сервер не вернул job_id.");

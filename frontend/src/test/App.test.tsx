@@ -86,6 +86,13 @@ describe("App", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Неверный или отсутствующий API-ключ.");
   });
 
+  it("explains a missing backend when the host has no /api route", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce(new Response("Not Found", { status: 404 })));
+    submit();
+    expect(await screen.findByRole("alert")).toHaveTextContent("Бэкенд не найден");
+    expect(screen.getByRole("button", { name: "Анализировать видео" })).toBeEnabled();
+  });
+
   it("rejects non-.mov files without calling the API", () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
